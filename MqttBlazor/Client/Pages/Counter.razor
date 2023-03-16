@@ -1,4 +1,6 @@
 ﻿@page "/counter"
+@*@inject MqttService _mqttService*@
+
 
 <PageTitle>Counter</PageTitle>
 
@@ -10,15 +12,28 @@
 
 @code {
     private int currentCount = 0;
+    //private string MessageData { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        //await MqttClientBuilder.ConnectClientUsingWebSockets();
-        await ClientSubscribe.HandleReceivedApplicationMessage();
-    }
+
+    //onAfterRender
+  
 
     private void IncrementCount()
     {
         currentCount++;
     }
+
+    //protected override async Task OnInitializedAsync()
+    //{
+    //    await _mqttService.ConnectMqttWebSocet("localhost:5109/mqtt");
+    //    await _mqttService.SubscribeMqtt("");
+    //    _mqttService.ApplicationMessageReceivedAsync += e =>
+    //          {
+    //              Console.WriteLine("Received application message.");
+    //              e.DumpToConsole();
+
+    //              return Task.CompletedTask;
+    //          };
+
+    //}
 }

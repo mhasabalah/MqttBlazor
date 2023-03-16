@@ -13,6 +13,7 @@ public static class ClientSubscribe
          * This sample subscribes to a topic and processes the received message.
          */
 
+        MqttResponse mqttResponse = new();
         var mqttFactory = new MqttFactory();
 
         using (var mqttClient = mqttFactory.CreateMqttClient())
@@ -45,7 +46,7 @@ public static class ClientSubscribe
 
             Console.WriteLine("MQTT client subscribed to topic.");
 
-
+            
         }
     }
 
@@ -148,7 +149,9 @@ public static class ClientSubscribe
 
         using (var mqttClient = mqttFactory.CreateMqttClient())
         {
-            var mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer("broker.hivemq.com").Build();
+            var mqttClientOptions = new MqttClientOptionsBuilder().WithWebSocketServer("localhost:5109/mqtt").Build();
+
+            //var mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer("broker.hivemq.com").Build();
 
             await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
 
@@ -156,7 +159,7 @@ public static class ClientSubscribe
                 .WithTopicFilter(
                     f =>
                     {
-                        f.WithTopic("mqttnet/samples/topic/1");
+                        f.WithTopic("Mohamed");
                     })
                 .Build();
 
@@ -168,4 +171,10 @@ public static class ClientSubscribe
             response.DumpToConsole();
         }
     }
+}
+
+
+public class MqttResponse
+{
+    public string? Payload { get; set; }
 }
