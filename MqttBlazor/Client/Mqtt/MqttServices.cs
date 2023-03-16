@@ -12,6 +12,22 @@ public class MqttService
 
     public async Task ConnectMqttTcp(string uri) => await _mqttClient.ConnectAsync(MqttWebTcp(uri));
     public async Task ConnectMqttWebSocet(string uri) => await _mqttClient.ConnectAsync(MqttWebSocet(uri));
+    public async Task ConnectClientTimeout(string uri, bool isWebSocet = true)
+    {
+        try
+        {
+            using (var timeoutToken = new CancellationTokenSource(TimeSpan.FromSeconds(1)))
+            {
+                MqttClientOptions mqttClientOptions = isWebSocet ? MqttWebSocet(uri) : MqttWebTcp(uri);
+                await _mqttClient.ConnectAsync(mqttClientOptions, timeoutToken.Token);
+
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Timeout while connecting.");
+        }
+    }
 
     public async Task PublishMqtt(string topic, string payload)
     {
@@ -60,22 +76,6 @@ public class MqttService
         }
     }
 
-    public async Task ConnectClientTimeout(string uri, bool isWebSocet = true)
-    {
-        try
-        {
-            using (var timeoutToken = new CancellationTokenSource(TimeSpan.FromSeconds(1)))
-            {
-                MqttClientOptions mqttClientOptions = isWebSocet ? MqttWebSocet(uri) : MqttWebTcp(uri);
-                await _mqttClient.ConnectAsync(mqttClientOptions, timeoutToken.Token);
-
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("Timeout while connecting.");
-        }
-    }
     public async Task PingServer(string uri, bool isWebSocet = true)
     {
         MqttClientOptions mqttClientOptions = isWebSocet ? MqttWebSocet(uri) : MqttWebTcp(uri);
