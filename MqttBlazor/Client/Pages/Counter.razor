@@ -11,6 +11,11 @@
 @code {
     private int currentCount = 0;
 
+     protected override async Task OnInitializedAsync()
+    {
+        await MqttClientBuilder.ConnectClientUsingWebSockets();
+    }
+
     private void IncrementCount()
     {
         currentCount++;
