@@ -152,8 +152,7 @@ public class MqttService
     }
 
     public async Task CleanDisconnectMqtt() => await _mqttClient.DisconnectAsync(new MqttClientDisconnectOptionsBuilder().WithReason(MqttClientDisconnectReason.NormalDisconnection).Build());
-    public void DisconnectNonClean() => _mqttClient.Dispose();
-
+    public void DisConnectNonClean() => _mqttClient.Dispose();
 
     private static MqttClientOptions MqttWebSocet(string uri) => new MqttClientOptionsBuilder()
             .WithWebSocketServer(uri)
