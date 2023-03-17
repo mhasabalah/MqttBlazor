@@ -5,8 +5,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseKestrel(options =>
 {
-    options.ListenAnyIP(1883, listenOptions => listenOptions.UseMqtt());
-    options.ListenAnyIP(5109);
+    //options.ListenAnyIP(1883, listenOptions => listenOptions.UseMqtt());
+    //options.ListenAnyIP(5109);
+
+    options.ListenAnyIP(7079, listenOptions =>
+    {
+        listenOptions.UseHttps();
+        listenOptions.UseMqtt();
+    });
+
 });
 
 // Add services to the container.

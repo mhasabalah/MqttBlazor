@@ -15,3 +15,13 @@
         </article>
     </main>
 </div>
+
+@code{
+
+    protected async override Task OnInitializedAsync()
+    {
+        await _mqttService.ConnectMqttWebSocet("localhost:5109/mqtt");
+
+        await base.OnInitializedAsync();
+    }
+}

@@ -1,5 +1,4 @@
 ﻿@page "/mqttConnetct"
-@inject MqttService _mqttService;
 <h1>MQTT Messages</h1>
 
 @if (_messages.Any())
@@ -21,8 +20,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await _mqttService.ConnectMqttWebSocet("localhost:5109/mqtt");
         await _mqttService.SubscribeMqtt("Mohamed", OnMessageReceived);
+        await _mqttService.SubscribeMqtt("mytopic/test", OnMessageReceived);
     }
 
     private void OnMessageReceived(string message)
