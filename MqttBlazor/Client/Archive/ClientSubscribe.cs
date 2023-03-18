@@ -1,6 +1,4 @@
-﻿using MqttBlazor.Client;
-using MQTTnet.Client;
-using MQTTnet.Packets;
+﻿using MQTTnet.Packets;
 using MQTTnet.Protocol;
 
 namespace MqttBlazor.Client;
@@ -46,7 +44,7 @@ public static class ClientSubscribe
 
             Console.WriteLine("MQTT client subscribed to topic.");
 
-            
+
         }
     }
 

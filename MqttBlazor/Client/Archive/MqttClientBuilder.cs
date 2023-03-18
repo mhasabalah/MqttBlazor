@@ -1,6 +1,4 @@
-﻿using System.Security.Authentication;
-
-namespace MqttBlazor.Client;
+﻿namespace MqttBlazor.Client;
 
 public static class MqttClientBuilder
 {
@@ -190,7 +188,7 @@ public static class MqttClientBuilder
         }
     }
 
-    public static async Task ConnectClientWithTLSEncryption() 
+    public static async Task ConnectClientWithTLSEncryption()
     {
         /*
          * This sample creates a simple MQTT client and connects to a public broker with enabled TLS encryption.

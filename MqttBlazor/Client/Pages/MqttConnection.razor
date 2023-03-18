@@ -20,8 +20,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await _mqttService.SubscribeMqtt("Mohamed", OnMessageReceived);
-        await _mqttService.SubscribeMqtt("mytopic/test", OnMessageReceived);
+        //await _mqttService.SubscribeMqtt("Mohamed", OnMessageReceived);
+        //await _mqttService.SubscribeMqtt("mytopic/test", OnMessageReceived);
+        await _mqttService.SubscribeMqtt("sensors/mohamed", OnMessageReceived);
     }
 
     private void OnMessageReceived(string message)

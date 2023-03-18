@@ -1,6 +1,6 @@
 ﻿namespace MqttBlazor.Client;
 
-public class MqttService
+public class MqttService : IMqttService
 {
     private readonly IMqttClient _mqttClient;
 
@@ -27,6 +27,44 @@ public class MqttService
         {
             Console.WriteLine("Timeout while connecting.");
         }
+    }
+    public async Task ConnectClientUsingTLS(string uri, bool isWebSocket = true)
+    {
+        var mqttClientOptionsBuilder = new MqttClientOptionsBuilder();
+        mqttClientOptionsBuilder = isWebSocket
+            ? mqttClientOptionsBuilder.WithWebSocketServer(uri)
+            : mqttClientOptionsBuilder.WithTcpServer(uri);
+
+        mqttClientOptionsBuilder.WithTls(o =>
+        {
+            o.AllowUntrustedCertificates = true;
+            o.SslProtocol = SslProtocols.Tls12;
+        });
+
+        MqttClientOptions? mqttClientOptions = mqttClientOptionsBuilder.Build();
+
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await _mqttClient.ConnectAsync(mqttClientOptions, timeout.Token);
+
+        Console.WriteLine("The MQTT client is connected.");
+    }
+    public async Task ConnectClientWithTLSEncryption(string uri, bool isWebSocket = true)
+    {
+        var mqttClientOptionsBuilder = new MqttClientOptionsBuilder();
+        mqttClientOptionsBuilder = isWebSocket
+            ? mqttClientOptionsBuilder.WithWebSocketServer(uri)
+            : mqttClientOptionsBuilder.WithTcpServer(uri);
+
+        MqttClientOptions? mqttClientOptions = mqttClientOptionsBuilder
+                                                     .WithTls(o =>
+                                                     o.CertificateValidationHandler = _ => true).Build();
+
+        using var timeout = new CancellationTokenSource(5000);
+        var response = await _mqttClient.ConnectAsync(mqttClientOptions, timeout.Token);
+
+        Console.WriteLine("The MQTT client is connected.");
+
+        response.DumpToConsole();
     }
 
     public async Task PublishMqtt(string topic, string payload)
@@ -152,7 +190,7 @@ public class MqttService
     }
 
     public async Task CleanDisconnectMqtt() => await _mqttClient.DisconnectAsync(new MqttClientDisconnectOptionsBuilder().WithReason(MqttClientDisconnectReason.NormalDisconnection).Build());
-    public void DisConnectNonClean() => _mqttClient.Dispose();
+    public void NonCleanDisConnectMqtt() => _mqttClient.Dispose();
 
     private static MqttClientOptions MqttWebSocet(string uri) => new MqttClientOptionsBuilder()
             .WithWebSocketServer(uri)

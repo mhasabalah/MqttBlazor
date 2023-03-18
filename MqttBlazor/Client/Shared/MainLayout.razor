@@ -20,7 +20,7 @@
 
     protected async override Task OnInitializedAsync()
     {
-        await _mqttService.ConnectMqttWebSocet("localhost:5109/mqtt");
+        await _mqttService.ConnectClientUsingTLS("localhost:7079/mqtt");
 
         await base.OnInitializedAsync();
     }
