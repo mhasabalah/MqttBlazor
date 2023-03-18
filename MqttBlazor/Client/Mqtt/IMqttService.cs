@@ -1,6 +1,6 @@
 ﻿namespace MqttBlazor.Client;
 
-public interface IMqttService
+public interface IMqttService : IDisposable
 {
     Task ConnectMqttTcp(string uri);
     Task ConnectMqttWebSocet(string uri);
@@ -20,6 +20,5 @@ public interface IMqttService
     
     Task UnsubscribeMqtt(string topic);
     
-    void NonCleanDisConnectMqtt();
     Task CleanDisconnectMqtt();
 }
