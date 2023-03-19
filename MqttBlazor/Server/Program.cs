@@ -1,6 +1,6 @@
-const string token = "KF_fEDsran9ZEAvWF3w_I-sUkpp2jxd3VPduZhk1B0HCvJNGc3QeQ_I5vmMlEzVHN_7u1CwnPOz9F3kcGEhNuA==";
-const string bucket = "bucket";
-const string org = "Smart Farm";
+const string token = "Your_Token";
+const string bucket = "Your_Bucket";
+const string org = "Your_Org";
 
 var _influxDbClient = new InfluxDBClient("http://localhost:8086", token);
 var builder = WebApplication.CreateBuilder(args);
