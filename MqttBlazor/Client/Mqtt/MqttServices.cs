@@ -3,6 +3,12 @@
 public class MqttService : IMqttService
 {
     private readonly IMqttClient _mqttClient;
+    const string _clientId = "BlazorClient";
+    const string _uri = "localhost:1883";
+    const string _username = "SobaTest";
+    const string _password = "SobaTest";
+
+    public event Func<MqttApplicationMessageReceivedEventArgs, Task> MattApplicationMessageReceivedAsync;
 
     public MqttService()
     {
@@ -39,12 +45,13 @@ public class MqttService : IMqttService
         {
             o.AllowUntrustedCertificates = true;
             o.SslProtocol = SslProtocols.Tls12;
-        });
+        }).WithCredentials(_username, _password);
 
         MqttClientOptions? mqttClientOptions = mqttClientOptionsBuilder.Build();
 
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await _mqttClient.ConnectAsync(mqttClientOptions, timeout.Token);
+
 
         Console.WriteLine("The MQTT client is connected.");
     }
@@ -63,7 +70,6 @@ public class MqttService : IMqttService
         var response = await _mqttClient.ConnectAsync(mqttClientOptions, timeout.Token);
 
         Console.WriteLine("The MQTT client is connected.");
-
         response.DumpToConsole();
     }
 
@@ -79,6 +85,7 @@ public class MqttService : IMqttService
 
     public async Task SubscribeMqtt(string topic, Action<string> messageHandler)
     {
+
         MqttClientSubscribeOptions mqttSubscribeOptions = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(topic).Build();
 
         await _mqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
@@ -93,7 +100,26 @@ public class MqttService : IMqttService
             }
             return Task.CompletedTask;
         };
+
     }
+
+    public async Task SubscribeMqtt(string topic, Func<string, Task> messageHandler)
+    {
+        MqttClientSubscribeOptions mqttSubscribeOptions = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(topic).Build();
+
+        await _mqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
+
+        Console.WriteLine($"MQTT client subscribed to {topic}.");
+        _mqttClient.ApplicationMessageReceivedAsync += async e =>
+        {
+            if (e.ApplicationMessage.Topic == topic)
+            {
+                var message = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
+                await messageHandler.Invoke(message);
+            }
+        };
+    }
+
     public async Task SubscribeMqtt(List<string> topics, Action<string> messageHandler)
     {
         foreach (var topic in topics)

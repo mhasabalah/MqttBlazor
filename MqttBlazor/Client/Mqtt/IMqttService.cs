@@ -2,6 +2,8 @@
 
 public interface IMqttService : IDisposable
 {
+    event Func<MqttApplicationMessageReceivedEventArgs, Task> MattApplicationMessageReceivedAsync;
+
     Task ConnectMqttTcp(string uri);
     Task ConnectMqttWebSocet(string uri);
     Task ConnectClientTimeout(string uri, bool isWebSocet = true);
@@ -21,4 +23,5 @@ public interface IMqttService : IDisposable
     Task UnsubscribeMqtt(string topic);
     
     Task CleanDisconnectMqtt();
+    Task SubscribeMqtt(string topic, Func<string, Task> messageHandler);
 }

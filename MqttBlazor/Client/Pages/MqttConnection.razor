@@ -1,6 +1,24 @@
 ﻿@page "/mqttConnetct"
 <h1>MQTT Messages</h1>
 
+<div class="card" style="width: 50rem;">
+    <div class="card-body">
+        <h5 class="card-title">Card title</h5>
+        <ApexChart TItem="Sensor"
+                   @ref=chart>
+
+            <ApexPointSeries TItem="Sensor"
+                             Items="sensors"
+                             Name="Name"
+                             SeriesType="SeriesType.Line"
+                             XValue="@(e => e.Date.ToString("HH:mm:ss"))"
+                             YAggregate="@(e => e.Sum(e => e.Value))"
+                             OrderByDescending="e=>e.Y" />
+        </ApexChart>
+    </div>
+</div>
+
+
 @if (_messages.Any())
 {
     <ul>
@@ -17,18 +35,39 @@ else
 
 @code {
     private List<string> _messages = new List<string>();
+    private ApexChart<Sensor> chart;
+
+    List<Sensor> sensors = new List<Sensor>();
 
     protected override async Task OnInitializedAsync()
     {
         //await _mqttService.SubscribeMqtt("Mohamed", OnMessageReceived);
         //await _mqttService.SubscribeMqtt("mytopic/test", OnMessageReceived);
         await _mqttService.SubscribeMqtt("sensors/mohamed", OnMessageReceived);
+
+        await base.OnInitializedAsync();
     }
 
-    private void OnMessageReceived(string message)
+    private async Task OnMessageReceived(string message)
     {
-        _messages.Add(message);
-        StateHasChanged();
+        //_messages.Add(message);
+        var sensorValue = decimal.Parse(message);
+
+        sensors.Add(new Sensor { Value = sensorValue });
+
+        // Only keep the last 10 sensor values
+        if (sensors.Count > 10)
+        {
+            sensors.RemoveAt(0);
+        }
+
+        await chart.UpdateSeriesAsync(true);
     }
 
+
+    public class Sensor
+    {
+        public DateTime Date { get; set; } = DateTime.Now;
+        public decimal Value { get; set; }
+    }
 }

@@ -1,6 +1,9 @@
-const string token = "Your_Token";
-const string bucket = "Your_Bucket";
-const string org = "Your_Org";
+using MQTTnet.Protocol;
+using MQTTnet.Server;
+
+const string token = "LEK-xrIL06ywC1brF0IeJq-G5nhEkBF7Wk7YrkkhS41Qw01G9BC4xVVOeymAMJoktA9jnyUw-WtnfMl9EOzXtg==";
+const string bucket = "SobaTest";
+const string org = "Smart Farm";
 
 var _influxDbClient = new InfluxDBClient("http://localhost:8086", token);
 var builder = WebApplication.CreateBuilder(args);
@@ -13,9 +16,6 @@ builder.WebHost.UseKestrel(options =>
 });
 
 // Add services to the container.
-
-
-
 
 builder.Services.AddMqttServer(optionsBuilder =>
 {
@@ -73,25 +73,41 @@ app.UseMqttServer(server =>
             e.ApplicationMessage?.QualityOfServiceLevel,
             e.ApplicationMessage?.Retain);
 
-        if (topic.StartsWith("sensors/"))
-        {
-            var sensorId = topic.Substring("sensors/".Length);
-            var value = double.Parse(payload);
+        //if (topic.StartsWith("sensors/"))
+        //{
+        //    var sensorId = topic.Substring("sensors/".Length);
+        //    var value = double.Parse(payload);
 
-            var point = PointData.Measurement("sensors")
-                .Tag("sensorId", sensorId)
-                .Field("value", value)
-                .Timestamp(DateTime.UtcNow, WritePrecision.Ms);
+        //    var point = PointData.Measurement("sensors")
+        //        .Tag("sensorId", sensorId)
+        //        .Field("value", value)
+        //        .Timestamp(DateTime.UtcNow, WritePrecision.Ns);
 
-            using (var writeApi = _influxDbClient.GetWriteApi())
-            {
-                writeApi.WritePoint(point, bucket, org);
-            }
-        }
+        //    using (var writeApi = _influxDbClient.GetWriteApi())
+        //    {
+        //        writeApi.WritePoint(point, bucket, org);
+        //    }
+        //}
 
 
         await Task.CompletedTask;
     };
+    server.ValidatingConnectionAsync += e =>
+    {
+        if (e.UserName != "SobaTest")
+        {
+            e.ReasonCode = MqttConnectReasonCode.BadUserNameOrPassword;
+        }
+
+        if (e.Password != "SobaTest")
+        {
+            e.ReasonCode = MqttConnectReasonCode.BadUserNameOrPassword;
+        }
+
+        return Task.CompletedTask;
+    };
+
+
 });
 
 app.UseBlazorFrameworkFiles();
