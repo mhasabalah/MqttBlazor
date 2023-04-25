@@ -8,18 +8,26 @@
                    @ref=chart>
 
             <ApexPointSeries TItem="Sensor"
-                             Items="sensors"
-                             Name="Name"
+                             Items="Tsensors"
+                             Name="Tempruture"
                              SeriesType="SeriesType.Line"
                              XValue="@(e => e.Date.ToString("HH:mm:ss"))"
                              YAggregate="@(e => e.Sum(e => e.Value))"
-                             OrderByDescending="e=>e.Y" />
+                             OrderBy="e=>e.X" />
+
+            <ApexPointSeries TItem="Sensor"
+                             Items="Hsensors"
+                             Name="Humidity"
+                             SeriesType="SeriesType.Line"
+                             XValue="@(e => e.Date.ToString("HH:mm:ss"))"
+                             YAggregate="@(e => e.Sum(e => e.Value))"
+                             OrderBy="e=>e.X" />
         </ApexChart>
     </div>
 </div>
 
 
-@if (_messages.Any())
+@*@if (_messages.Any())
 {
     <ul>
         @foreach (var message in _messages)
@@ -31,43 +39,108 @@
 else
 {
     <p>No messages received yet</p>
-}
+}*@
 
 @code {
-    private List<string> _messages = new List<string>();
+    //private List<string> _messages = new List<string>();
     private ApexChart<Sensor> chart;
 
+    List<Sensor> Tsensors = new List<Sensor>();
+    List<Sensor> Hsensors = new List<Sensor>();
+
+
     List<Sensor> sensors = new List<Sensor>();
+    List<SensorType> sensorTypes = Enum.GetValues(typeof(SensorType)).Cast<SensorType>().ToList();
 
     protected override async Task OnInitializedAsync()
     {
+        await _mqttService.SubscribeMqtt(sensorTypes, OnMessageReceived);
+
         //await _mqttService.SubscribeMqtt("Mohamed", OnMessageReceived);
         //await _mqttService.SubscribeMqtt("mytopic/test", OnMessageReceived);
-        await _mqttService.SubscribeMqtt("sensors/mohamed", OnMessageReceived);
+        //await _mqttService.SubscribeMqtt("test/#", OnMessageReceived);
 
         await base.OnInitializedAsync();
     }
 
-    private async Task OnMessageReceived(string message)
+    private async Task OnMessageReceived(SensorType sensorName, string message, string sensorId)
     {
-        //_messages.Add(message);
-        var sensorValue = decimal.Parse(message);
+        if (Hsensors.Count == 5) Hsensors.Clear();
+        if (Tsensors.Count == 5) Tsensors.Clear();
 
-        sensors.Add(new Sensor { Value = sensorValue });
-
-        // Only keep the last 10 sensor values
-        if (sensors.Count > 10)
+        switch (sensorName)
         {
-            sensors.RemoveAt(0);
+            case SensorType.Temperature:
+                Tsensors.Add(new Sensor { SensorType = sensorName, Value = decimal.Parse(message) });
+                Console.WriteLine($"Temperature sensor ({sensorId}): {message}");
+                break;
+
+            case SensorType.Humidity:
+                Hsensors.Add(new Sensor { SensorType = sensorName, Value = decimal.Parse(message) });
+                Console.WriteLine($"Humidity sensor ({sensorId}): {message}");
+                break;
+
+            default:
+                Console.WriteLine($"Unknown sensor name: {sensorName}");
+                break;
         }
+
+        if (Hsensors.Count == 10 || Tsensors.Count == 10)
+        {
+            Hsensors.RemoveAt(1);
+            Tsensors.RemoveAt(1);
+        }
+        //RemoveListInChartCount();
 
         await chart.UpdateSeriesAsync(true);
     }
 
+    private void RemoveListInChartCount(int count = 10)
+    {
+        Hsensors.RemoveAt(1);
+        Tsensors.RemoveAt(1);
+    }
+
+    //private async Task OnMessageReceived(SensorType sensorName,string message,string sensorId)
+    //{
+    //    foreach (SensorType sensor in sensorTypes)
+    //    {
+    //        if (sensorName == sensor)
+    //        {
+    //            sensors.Add(new Sensor { SensorType = sensorName, Value = decimal.Parse(message) });
+    //            Console.WriteLine($"{sensor.ToString()} sensor ({sensorId}): {message}");
+    //            break;
+    //        }
+    //    }
+
+    //    if (sensors.Count > 10)
+    //    {
+    //        sensors.RemoveAt(0);
+    //    }
+
+    //    await chart.UpdateSeriesAsync(true);
+    //}
+
+    //private async Task OnMessageReceived2(string message)
+    //{
+    //    //_messages.Add(message);
+    //    var sensorValue = decimal.Parse(message);
+
+    //    sensors.Add(new Sensor { Value = sensorValue });
+
+    //    // Only keep the last 10 sensor values
+    //    if (sensors.Count > 10)
+    //    {
+    //        sensors.RemoveAt(0);
+    //    }
+
+    //    await chart.UpdateSeriesAsync(true);
+    //}
 
     public class Sensor
     {
-        public DateTime Date { get; set; } = DateTime.Now;
+        public SensorType SensorType { get; set; }
         public decimal Value { get; set; }
+        public DateTime Date { get; set; } = DateTime.Now;
     }
 }

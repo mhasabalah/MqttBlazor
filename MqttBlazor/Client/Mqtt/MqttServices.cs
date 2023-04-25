@@ -3,6 +3,7 @@
 public class MqttService : IMqttService
 {
     private readonly IMqttClient _mqttClient;
+    
     const string _clientId = "BlazorClient";
     const string _uri = "localhost:1883";
     const string _username = "SobaTest";
@@ -224,4 +225,43 @@ public class MqttService : IMqttService
     private static MqttClientOptions MqttWebTcp(string uri) => new MqttClientOptionsBuilder()
             .WithTcpServer(uri)
             .Build();
+
+
+    public async Task SubscribeMqtt(List<SensorType> sensors, Func<SensorType, string, string, Task> messageHandler)
+    {
+        foreach (var sensorName in sensors)
+        {
+            string topic = $"sensor/{sensorName.ToString().ToLower()}/#";
+            MqttClientSubscribeOptions mqttSubscribeOptions = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(topic).Build();
+
+            await _mqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
+
+            Console.WriteLine($"MQTT client subscribed to {topic}.");
+        }
+
+        _mqttClient.ApplicationMessageReceivedAsync += async e =>
+        {
+            if (e.ApplicationMessage.Topic.StartsWith("sensor/"))
+            {
+                var topic = e.ApplicationMessage.Topic;
+                var message = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
+
+                // Extract sensor name and ID from topic
+                var topicParts = topic.Split('/');
+                var sensorNameStr = topicParts[1];
+                var sensorId = topicParts[2];
+
+                // Find matching sensor in list
+                var sensorName = (SensorType)Enum.Parse(typeof(SensorType), sensorNameStr, true);
+                if (!sensors.Contains(sensorName))
+                {
+                    Console.WriteLine($"Unknown sensor name: {sensorNameStr}");
+                    return;
+                }
+
+                await messageHandler.Invoke(sensorName, message, sensorId);
+            }
+        };
+    }
+
 }

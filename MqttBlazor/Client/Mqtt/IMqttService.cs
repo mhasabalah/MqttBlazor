@@ -24,4 +24,5 @@ public interface IMqttService : IDisposable
     
     Task CleanDisconnectMqtt();
     Task SubscribeMqtt(string topic, Func<string, Task> messageHandler);
+    Task SubscribeMqtt(List<SensorType> sensors, Func<SensorType, string, string, Task> messageHandler);
 }
