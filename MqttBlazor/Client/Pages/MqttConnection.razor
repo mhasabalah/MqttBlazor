@@ -65,9 +65,6 @@ else
 
     private async Task OnMessageReceived(SensorType sensorName, string message, string sensorId)
     {
-        if (Hsensors.Count == 5) Hsensors.Clear();
-        if (Tsensors.Count == 5) Tsensors.Clear();
-
         switch (sensorName)
         {
             case SensorType.Temperature:
@@ -87,8 +84,8 @@ else
 
         if (Hsensors.Count == 10 || Tsensors.Count == 10)
         {
-            Hsensors.RemoveAt(1);
-            Tsensors.RemoveAt(1);
+            Hsensors.RemoveAt(0);
+            Tsensors.RemoveAt(0);
         }
         //RemoveListInChartCount();
 
@@ -137,10 +134,5 @@ else
     //    await chart.UpdateSeriesAsync(true);
     //}
 
-    public class Sensor
-    {
-        public SensorType SensorType { get; set; }
-        public decimal Value { get; set; }
-        public DateTime Date { get; set; } = DateTime.Now;
-    }
+
 }
