@@ -2,15 +2,13 @@
 
 public class MqttService : IMqttService
 {
-    private readonly IMqttClient _mqttClient;
-    
     const string _clientId = "BlazorClient";
     const string _uri = "localhost:1883";
     const string _username = "SobaTest";
     const string _password = "SobaTest";
-
-    public event Func<MqttApplicationMessageReceivedEventArgs, Task> MattApplicationMessageReceivedAsync;
-
+ 
+    private readonly IMqttClient _mqttClient;
+    
     public MqttService()
     {
         MqttFactory? mqttFactory = new MqttFactory();
@@ -103,7 +101,6 @@ public class MqttService : IMqttService
         };
 
     }
-
     public async Task SubscribeMqtt(string topic, Func<string, Task> messageHandler)
     {
         MqttClientSubscribeOptions mqttSubscribeOptions = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(topic).Build();
@@ -120,7 +117,6 @@ public class MqttService : IMqttService
             }
         };
     }
-
     public async Task SubscribeMqtt(List<string> topics, Action<string> messageHandler)
     {
         foreach (var topic in topics)
@@ -140,6 +136,42 @@ public class MqttService : IMqttService
             };
         }
     }
+    public async Task SubscribeMqtt(List<SensorType> sensors, Func<SensorType, string, string, Task> messageHandler)
+    {
+        foreach (var sensorName in sensors)
+        {
+            string topic = $"sensor/{sensorName.ToString().ToLower()}/#";
+            MqttClientSubscribeOptions mqttSubscribeOptions = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(topic).Build();
+
+            await _mqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
+
+            Console.WriteLine($"MQTT client subscribed to {topic}.");
+        }
+
+        _mqttClient.ApplicationMessageReceivedAsync += async e =>
+        {
+            if (e.ApplicationMessage.Topic.StartsWith("sensor/"))
+            {
+                var topic = e.ApplicationMessage.Topic;
+                var message = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
+
+                // Extract sensor name and ID from topic
+                var topicParts = topic.Split('/');
+                var sensorNameStr = topicParts[1];
+                var sensorId = topicParts[2];
+
+                // Find matching sensor in list
+                var sensorName = (SensorType)Enum.Parse(typeof(SensorType), sensorNameStr, true);
+                if (!sensors.Contains(sensorName))
+                {
+                    Console.WriteLine($"Unknown sensor name: {sensorNameStr}");
+                    return;
+                }
+
+                await messageHandler.Invoke(sensorName, message, sensorId);
+            }
+        };
+    }
 
     public async Task PingServer(string uri, bool isWebSocet = true)
     {
@@ -150,7 +182,6 @@ public class MqttService : IMqttService
 
         Console.WriteLine("The MQTT server replied to the ping request.");
     }
-
     public async Task ReconnectUsingEvent(string uri, bool isWebSocet = true)
     {
         /*
@@ -215,7 +246,6 @@ public class MqttService : IMqttService
         await _mqttClient.UnsubscribeAsync(topic);
         Console.WriteLine("Unsub Async");
     }
-
     public async Task CleanDisconnectMqtt() => await _mqttClient.DisconnectAsync(new MqttClientDisconnectOptionsBuilder().WithReason(MqttClientDisconnectReason.NormalDisconnection).Build());
     public void Dispose() => _mqttClient?.Dispose();
 
@@ -225,43 +255,4 @@ public class MqttService : IMqttService
     private static MqttClientOptions MqttWebTcp(string uri) => new MqttClientOptionsBuilder()
             .WithTcpServer(uri)
             .Build();
-
-
-    public async Task SubscribeMqtt(List<SensorType> sensors, Func<SensorType, string, string, Task> messageHandler)
-    {
-        foreach (var sensorName in sensors)
-        {
-            string topic = $"sensor/{sensorName.ToString().ToLower()}/#";
-            MqttClientSubscribeOptions mqttSubscribeOptions = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(topic).Build();
-
-            await _mqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
-
-            Console.WriteLine($"MQTT client subscribed to {topic}.");
-        }
-
-        _mqttClient.ApplicationMessageReceivedAsync += async e =>
-        {
-            if (e.ApplicationMessage.Topic.StartsWith("sensor/"))
-            {
-                var topic = e.ApplicationMessage.Topic;
-                var message = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
-
-                // Extract sensor name and ID from topic
-                var topicParts = topic.Split('/');
-                var sensorNameStr = topicParts[1];
-                var sensorId = topicParts[2];
-
-                // Find matching sensor in list
-                var sensorName = (SensorType)Enum.Parse(typeof(SensorType), sensorNameStr, true);
-                if (!sensors.Contains(sensorName))
-                {
-                    Console.WriteLine($"Unknown sensor name: {sensorNameStr}");
-                    return;
-                }
-
-                await messageHandler.Invoke(sensorName, message, sensorId);
-            }
-        };
-    }
-
 }
