@@ -140,6 +140,8 @@ public class MqttService : IMqttService
     {
         foreach (var sensorName in sensors)
         {
+            //sensor/temprture/#
+            //sensor/humdity/#
             string topic = $"sensor/{sensorName.ToString().ToLower()}/#";
             MqttClientSubscribeOptions mqttSubscribeOptions = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(topic).Build();
 
@@ -150,7 +152,7 @@ public class MqttService : IMqttService
 
         _mqttClient.ApplicationMessageReceivedAsync += async e =>
         {
-            if (e.ApplicationMessage.Topic.StartsWith("sensor/"))
+            if (e.ApplicationMessage.Topic.StartsWith("sensor/tem/1234"))
             {
                 var topic = e.ApplicationMessage.Topic;
                 var message = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
